@@ -1,0 +1,4 @@
+{
+  "name": "Python & React Project",
+  "postCreateCommand": "pip install -r backend/requirements.txt"
+}
