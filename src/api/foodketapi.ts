@@ -1,24 +1,26 @@
 import { supabase } from "../lib/supabase";
 import axios from "axios";
 
-/**
- * 환경에 따라 API 베이스 URL을 결정합니다.
- */
 const getApiBase = () => {
-  // 1. Vercel 환경 변수가 있다면 최우선 (배포 환경용)
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  // 1. Vercel 환경 변수 확인
+  let envUrl = import.meta.env.VITE_API_URL;
+
+  if (envUrl) {
+    // 끝에 슬래시가 있다면 제거
+    envUrl = envUrl.replace(/\/$/, "");
+    // 만약 환경변수에 /api가 안 붙어있다면 붙여줌 (유연한 대응)
+    return envUrl.endsWith("/api") ? envUrl : `${envUrl}/api`;
   }
 
   const hostname = window.location.hostname;
 
-  // 2. GitHub Codespaces 환경 감지
+  // 2. GitHub Codespaces 환경
   if (hostname.includes("github.dev")) {
     const baseUrl = hostname.split("-5173")[0];
     return `https://${baseUrl}-8000.app.github.dev/api`;
   }
 
-  // 3. 기본 로컬 환경
+  // 3. 로컬 환경
   return "http://localhost:8000/api";
 };
 
@@ -26,17 +28,18 @@ const API_BASE = getApiBase();
 
 // --- AI 관련 ---
 export const getAiRecipe = async (ingredients: string[], userId: string) => {
-  // AI 기능 호출 시 주소가 제대로 잡혔는지 콘솔에서 확인 가능
-  console.log("Calling AI API at:", `${API_BASE}/ai/recommend`);
+  // 최종 호출 주소를 콘솔에 찍어 모바일 크롬 inspect로 확인할 수 있게 함
+  const targetUrl = `${API_BASE}/ai/recommend`;
+  console.log("🚀 API Request to:", targetUrl);
   
-  const { data } = await axios.post(`${API_BASE}/ai/recommend`, {
+  const { data } = await axios.post(targetUrl, {
     ingredients,
     user_id: userId,
   });
   return data;
 };
 
-// --- 거래 게시판 관련 --- (Supabase는 클라이언트 설정을 따르므로 그대로 유지)
+// --- 이하 동일 (거래 게시판, 댓글 관련 코드) ---
 export const getTradePosts = async () => {
   const { data, error } = await supabase
     .from("trades")
@@ -52,7 +55,6 @@ export const createTradePost = async (postData: any) => {
   return data;
 };
 
-// --- 커뮤니티 댓글 관련 ---
 export const getComments = async (postId: number) => {
   const { data, error } = await supabase
     .from("comments")
