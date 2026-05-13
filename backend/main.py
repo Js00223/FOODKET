@@ -27,7 +27,7 @@ async def recommend_recipe(request: RecipeRequest):
         raise HTTPException(status_code=500, detail="API 키가 없습니다.")
 
     # 호출할 모델 후보군 (환경마다 인식하는 이름이 다를 수 있음)
-    model_candidates = ["gemini-2.5-flash"]
+    model_candidates = ["gemini-3.1-pro-preview"]
     last_error = ""
 
     client = genai.Client(api_key=GEMINI_KEY)
