@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, Send, Sparkles, ChefHat } from "lucide-react";
 import { useNavigate } from "react-router";
 import axios from "axios";
-import { getAiRecipe } from "../api/foodketapi"; // 경로가 맞는지 확인해 주세요!
+import { getAiRecipe } from "../../api/foodketapi"; // 경로가 맞는지 확인해 주세요!
 
 type ChatStep =
   | "purpose"
