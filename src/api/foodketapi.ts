@@ -10,7 +10,7 @@ const getApiBase = () => {
 
   if (isProduction) {
     // 여기에 본인의 실제 Render 주소를 직접 넣으세요
-    return "https://foodket-idb5.onrender.com/api";
+    return "https://foodket-idb5.onrender.com";
   }
 
   return "http://localhost:8000/api";
