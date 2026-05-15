@@ -30,7 +30,7 @@ const getApiBase = () => {
   }
 
   // 3. 로컬 환경
-  return "http://localhost:8000/api";
+  return "https://foodket-2.onrender.com/api";
 };
 
 const API_BASE = getApiBase();
