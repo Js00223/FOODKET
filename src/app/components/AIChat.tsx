@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, Send, Sparkles, ChefHat } from "lucide-react";
 import { useNavigate } from "react-router";
-import { getAiRecipe, saveRecipeToServer } from "../../api/foodketapi"; // ✅ saveRecipeToServer API 추가 연동 필요
+import { getAiRecipe } from "../../api/foodketapi";
 
 type ChatStep =
   | "purpose"
@@ -178,11 +178,16 @@ export default function AIChat() {
 
     try {
       const ingredientsArray = choices.ingredients?.split(",").map((i) => i.trim()) || [];
+      
+      // ✅ 1. 'data' 변수로 응답을 받습니다.
       const data = await getAiRecipe(ingredientsArray, "user_123");
 
       console.log("레시피 생성 성공:", data);
 
+      // ✅ 2. 'response.data' 대신 'data'를 사용합니다.
       const rawContent = data.recipe;
+      
+      // JSON 파싱 (문자열일 경우 대비)
       const jsonContent = typeof rawContent === "string"
           ? JSON.parse(rawContent.replace(/```json|```/g, ""))
           : rawContent;
@@ -224,22 +229,6 @@ export default function AIChat() {
           content: "죄송합니다. 레시피 생성 중 오류가 발생했습니다. 서버 상태를 확인해주세요. 😢",
         },
       ]);
-    }
-  };
-
-  // ✅ 백엔드 서버에 레시피 저장을 요청하는 핸들러 함수
-  const handleSaveToServer = async () => {
-    if (!currentRecipe) return;
-
-    try {
-      // 파라미터 구조는 백엔드 스키마 엔드포인트 요구사항에 맞게 변경해 주세요.
-      // 예시: saveRecipeToServer(recipeData, userId)
-      await saveRecipeToServer(currentRecipe, "user_123");
-      alert("서버에 레시피 저장 완료! 🎉");
-      navigate("/");
-    } catch (error) {
-      console.error("Server Save Error:", error);
-      alert("서버에 레시피를 저장하는 중 오류가 발생했습니다. 😢");
     }
   };
 
@@ -317,14 +306,20 @@ export default function AIChat() {
 
       {step === "result" && (
         <div className="bg-white border-t border-gray-200 sticky bottom-0 max-w-md mx-auto w-full p-4 pb-8 flex gap-2">
-          {/* ✅ 클릭 이벤트를 서버 전송 비동기 함수로 변경 */}
           <button
-            onClick={handleSaveToServer}
-            className="flex-1 bg-orange-500 text-white font-medium py-3 rounded-xl hover:bg-orange-600 transition-colors"
+            onClick={() => {
+              if (currentRecipe) {
+                const saved = JSON.parse(localStorage.getItem("savedRecipes") || "[]");
+                localStorage.setItem("savedRecipes", JSON.stringify([...saved, currentRecipe]));
+                alert("레시피 저장 완료!");
+              }
+              navigate("/");
+            }}
+            className="flex-1 bg-orange-500 text-white font-medium py-3 rounded-xl"
           >
             저장하기
           </button>
-          <button onClick={() => window.location.reload()} className="flex-1 bg-gray-100 text-gray-800 font-medium py-3 rounded-xl hover:bg-gray-200 transition-colors">
+          <button onClick={() => window.location.reload()} className="flex-1 bg-gray-100 text-gray-800 font-medium py-3 rounded-xl">
             새로 시작
           </button>
         </div>
