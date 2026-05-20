@@ -20,7 +20,11 @@ const getApiBase = () => {
 
 const API_BASE = getApiBase();
 
-// --- 1. AI 관련 (레시피 추천) ---
+// --- 1. AI 관련 (레시피 추천 및 저장) ---
+
+/**
+ * AI에게 식재료 기반 레시피 추천을 요청합니다.
+ */
 export const getAiRecipe = async (ingredients: string[], userId: string) => {
   const targetUrl = `${API_BASE}/ai/recommend`;
   
@@ -35,6 +39,27 @@ export const getAiRecipe = async (ingredients: string[], userId: string) => {
     return data;
   } catch (error) {
     console.error("AI Recipe Fetch Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * 생성된 AI 레시피 기록을 백엔드 서버 데이터베이스에 저장합니다.
+ */
+export const saveRecipeToServer = async (recipeData: any, userId: string) => {
+  // 하드코딩된 주소 대신 상단의 동적 API_BASE와 매핑된 엔드포인트를 적용했습니다.
+  const targetUrl = `${API_BASE}/recipe/save`;
+  
+  console.log("💾 Saving Recipe to API:", targetUrl);
+
+  try {
+    const { data } = await axios.post(targetUrl, {
+      user_id: userId, // 백엔드 네이밍 컨벤션(snake_case)에 맞춤형 가공이 필요하다면 여기서 매핑 가능합니다.
+      recipe: recipeData,
+    });
+    return data;
+  } catch (error) {
+    console.error("Server Save API Error:", error);
     throw error;
   }
 };
