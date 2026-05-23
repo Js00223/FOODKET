@@ -40,33 +40,76 @@ export const getAiRecipe = async (ingredients: string[], userId: string) => {
 };
 
 /**
- * AI가 추천한 레시피 기록을 로컬이 아닌 Supabase 'ai_recipes' 테이블에 직접 저장합니다.
+ * AI가 추천한 레시피 기록을 로컬이 아닌 Supabase 'saved_recipes' 테이블에 직접 저장합니다.
  */
 export const saveRecipeToServer = async (recipeData: any, userId: string) => {
   console.log("💾 Saving Recipe directly to Supabase for User:", userId);
   
   try {
     const { data, error } = await supabase
-      .from("ai_recipes")
+      .from("saved_recipes")
       .insert([
         {
           user_id: userId,
-          recipe_id: recipeData.id,
+          recipe_id: recipeData.id || recipeData.recipe_id,
           name: recipeData.name,
           difficulty: recipeData.difficulty,
           time: recipeData.time,
           servings: recipeData.servings,
           ingredients: recipeData.ingredients, // Supabase Column Type: jsonb
           steps: recipeData.steps,             // Supabase Column Type: jsonb
-          user_choices: recipeData.userChoices,// Supabase Column Type: jsonb
-          saved_at: recipeData.savedAt
+          user_choices: recipeData.userChoices || recipeData.user_choices, // Supabase Column Type: jsonb
+          saved_at: recipeData.savedAt || new Date().toISOString()
         }
-      ]);
+      ])
+      .select();
 
     if (error) throw error;
     return data;
   } catch (error) {
     console.error("Supabase Recipe Save Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * 내가 저장한 AI 요리 추천 내역 전체를 불러옵니다. (마이페이지용)
+ */
+export const getMySavedRecipesFromServer = async (userId: string) => {
+  console.log("🔍 Fetching Saved Recipes from Supabase for User:", userId);
+  
+  try {
+    const { data, error } = await supabase
+      .from("saved_recipes")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Supabase Fetch Saved Recipes Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * 저장했던 AI 추천 레시피를 삭제합니다. (찜 취소 기능)
+ */
+export const deleteSavedRecipeFromServer = async (recipeId: string, userId: string) => {
+  console.log("🗑️ Deleting Saved Recipe from Supabase:", recipeId);
+  
+  try {
+    const { data, error } = await supabase
+      .from("saved_recipes")
+      .delete()
+      .eq("user_id", userId)
+      .eq("recipe_id", recipeId);
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Supabase Delete Saved Recipe Error:", error);
     throw error;
   }
 };
