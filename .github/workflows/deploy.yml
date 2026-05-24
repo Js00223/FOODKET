@@ -1,0 +1,50 @@
+name: Foodket AWS S3 & CloudFront CI/CD
+
+on:
+  push:
+    branches:
+      - main # main 브랜치에 push나 PR이 병합될 때 트리거 수행
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. GitHub 리포지토리 코드 가져오기
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # 2. Node.js 환경 세팅
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-level: '20' # 팀장님 프로젝트 Node 버전에 맞춰 변경 가능
+          cache: 'npm'
+
+      # 3. 의존성 패키지 설치
+      - name: Install Dependencies
+        run: npm install
+
+      # 4. Vite 프로젝트 빌드 수행 (Vite 환경변수 주입 포함)
+      - name: Build Project
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      # 5. AWS 인증 자격 세팅
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 6. S3 버킷에 build된 dist 폴더 내용 동기화 업로드
+      - name: Deploy to AWS S3
+        run: |
+          aws s3 sync ./dist s3://${{ secrets.AWS_S3_BUCKET }} --delete
+
+      # 7. (선택) CloudFront 배포 캐시 무효화 (실시간 반영용)
+      # 만약 CloudFront 배포 ID가 있다면 세팅해 주면 배포 즉시 유저 화면에 업데이트됩니다.
+      
