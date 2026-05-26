@@ -1,4 +1,4 @@
-import os
+Import os
 import json
 import re
 from pathlib import Path
@@ -22,23 +22,11 @@ SUPABASE_ANON_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY") or os.getenv("VITE_
 
 app = FastAPI()
 
-# 🌟 [수정] 팀장님이 보내주신 S3 주소와 와일드카드를 조합하여 모든 클라우드 요청을 안전하게 허용합니다.
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    # 1. 현재 확인하신 S3 자체 정적 웹 호스팅 도메인 등록 (뒤에 /ai-chat 경로는 떼고 도메인만 넣어야 합니다)
-    "http://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
-    # 2. 혹시 몰라 HTTPS 보안 규격 버전도 미리 대비해서 등록
-    "https://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
-    "https://d263z3aimjt205.cloudfront.net",
-]
-
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    # 크레덴셜(인증) 통신을 위해 지정된 origins를 우선 적용하되, 유연한 매핑을 처리합니다.
-    allow_origins=origins if origins else ["*"], 
-    allow_credentials=True,                      # True로 유지하여 안전한 프론트-백 세션 헤더 허용
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -105,6 +93,7 @@ async def save_recipe(request: RecipeSaveRequest):
         print(f"🚀 [레시피 저장 요청] User ID: {request.user_id}, 요리명: {request.recipe.get('name')}")
         
         # Supabase의 'ai_recipes' 테이블에 저장 요청을 보냅니다.
+        # 데이터베이스 스키마 컬럼명에 맞게 key를 조절해 주세요.
         data, count = supabase.table("ai_recipes").insert({
             "user_id": request.user_id,
             "recipe_id": request.recipe.get("id"),
@@ -112,6 +101,7 @@ async def save_recipe(request: RecipeSaveRequest):
             "difficulty": request.recipe.get("difficulty"),
             "time": request.recipe.get("time"),
             "servings": request.recipe.get("servings"),
+            # List(배열)나 객체 형태는 Postgres가 JSONB 타입일 때 안전하게 들어갑니다.
             "ingredients": request.recipe.get("ingredients"),
             "steps": request.recipe.get("steps"),
             "user_choices": request.recipe.get("userChoices"),
