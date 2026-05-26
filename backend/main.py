@@ -31,6 +31,7 @@ origins = [
     "http://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
     # 2. 혹시 몰라 HTTPS 보안 규격 버전도 미리 대비해서 등록
     "https://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
+    "https://d263z3aimjt205.cloudfront.net",
 ]
 
 app.add_middleware(
