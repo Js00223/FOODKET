@@ -22,19 +22,22 @@ SUPABASE_ANON_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY") or os.getenv("VITE_
 
 app = FastAPI()
 
-# 🌟 [수정] AWS CloudFront와 로컬 개발 환경을 명확히 허용하도록 CORS 서빙 타겟 구체화
+# 🌟 [수정] 팀장님이 보내주신 S3 주소와 와일드카드를 조합하여 모든 클라우드 요청을 안전하게 허용합니다.
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
-    # 여기에 팀장님의 AWS CloudFront 도메인 주소를 문자열로 넣어주시면 완벽합니다!
-    # 예: "https://xxxx.cloudfront.net" 
+    # 1. 현재 확인하신 S3 자체 정적 웹 호스팅 도메인 등록 (뒤에 /ai-chat 경로는 떼고 도메인만 넣어야 합니다)
+    "http://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
+    # 2. 혹시 몰라 HTTPS 보안 규격 버전도 미리 대비해서 등록
+    "https://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if origins else ["*"], # 오리진 목록 지정 (크레덴셜 통신 최적화)
-    allow_credentials=True,                      # 🌟 True로 변경하여 세션/인증 헤더 통신 허용
+    # 크레덴셜(인증) 통신을 위해 지정된 origins를 우선 적용하되, 유연한 매핑을 처리합니다.
+    allow_origins=origins if origins else ["*"], 
+    allow_credentials=True,                      # True로 유지하여 안전한 프론트-백 세션 헤더 허용
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -62,7 +65,7 @@ class RecipeSaveRequest(BaseModel):
 
 # --- API 엔드포인트 ---
 
-# 1. AI レ시피 추천 라우터
+# 1. AI 레시피 추천 라우터
 @app.post("/api/ai/recommend")
 async def recommend_recipe(request: RecipeRequest):
     if not GEMINI_KEY:
@@ -101,7 +104,6 @@ async def save_recipe(request: RecipeSaveRequest):
         print(f"🚀 [레시피 저장 요청] User ID: {request.user_id}, 요리명: {request.recipe.get('name')}")
         
         # Supabase의 'ai_recipes' 테이블에 저장 요청을 보냅니다.
-        # 데이터베이스 스키마 컬럼명에 맞게 key를 조절해 주세요.
         data, count = supabase.table("ai_recipes").insert({
             "user_id": request.user_id,
             "recipe_id": request.recipe.get("id"),
@@ -109,7 +111,6 @@ async def save_recipe(request: RecipeSaveRequest):
             "difficulty": request.recipe.get("difficulty"),
             "time": request.recipe.get("time"),
             "servings": request.recipe.get("servings"),
-            # List(배열)나 객체 형태는 Postgres가 JSONB 타입일 때 안전하게 들어갑니다.
             "ingredients": request.recipe.get("ingredients"),
             "steps": request.recipe.get("steps"),
             "user_choices": request.recipe.get("userChoices"),
