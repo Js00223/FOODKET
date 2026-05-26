@@ -22,11 +22,19 @@ SUPABASE_ANON_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY") or os.getenv("VITE_
 
 app = FastAPI()
 
-# CORS 설정
+# 🌟 [수정] AWS CloudFront와 로컬 개발 환경을 명확히 허용하도록 CORS 서빙 타겟 구체화
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    # 여기에 팀장님의 AWS CloudFront 도메인 주소를 문자열로 넣어주시면 완벽합니다!
+    # 예: "https://xxxx.cloudfront.net" 
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=origins if origins else ["*"], # 오리진 목록 지정 (크레덴셜 통신 최적화)
+    allow_credentials=True,                      # 🌟 True로 변경하여 세션/인증 헤더 통신 허용
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -54,7 +62,7 @@ class RecipeSaveRequest(BaseModel):
 
 # --- API 엔드포인트 ---
 
-# 1. AI 레시피 추천 라우터
+# 1. AI レ시피 추천 라우터
 @app.post("/api/ai/recommend")
 async def recommend_recipe(request: RecipeRequest):
     if not GEMINI_KEY:
