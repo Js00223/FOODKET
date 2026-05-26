@@ -2,8 +2,7 @@ import os
 import json
 import re
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
 from typing import List, Dict, Any
 import google.generativeai as genai
@@ -22,23 +21,26 @@ SUPABASE_ANON_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY") or os.getenv("VITE_
 
 app = FastAPI()
 
-# AWS S3 및 CloudFront, 로컬 오리진 허용
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
-    "https://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
-    "https://foodket-coral.vercel.app",
-]
+# FastAPI의 미들웨어 버그를 완벽하게 우회하는 커스텀 CORS 헤더 강제 인젝션 로직
+@app.middleware("http")
+async def add_custom_cors_headers(request: Request, call_next):
+    origin = request.headers.get("origin", "*")
+    if request.method == "OPTIONS":
+        response = Response()
+        response.status_code = 200
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins if origins else ["*"], 
-    allow_credentials=True,                      
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
 
 # ✅ Supabase 클라이언트 초기화 (환경변수가 있을 때만 인스턴스 생성)
 supabase: Client = None
@@ -62,7 +64,7 @@ class RecipeSaveRequest(BaseModel):
 
 # --- API 엔드포인트 ---
 
-# 🌟 [주소 교정] 프론트엔드가 /api를 붙여서 쏘므로, 여기서는 중복되지 않게 /ai/recommend로 매핑합니다.
+# AI 레시피 추천 라우터
 @app.post("/api/ai/recommend")
 async def recommend_recipe(request: RecipeRequest):
     if not GEMINI_KEY:
@@ -73,33 +75,37 @@ async def recommend_recipe(request: RecipeRequest):
     
     try:
         ingredients_str = ", ".join(request.ingredients)
-        # Gemini가 뱉는 JSON Key 규격을 프론트엔드가 파싱하기 좋게 title->name 등으로 최적화 프롬프트 수정
         prompt = (
             f"재료: {ingredients_str}. 요리 1개를 추천해줘.\n"
             "반드시 JSON 형식으로만 응답해야 해. Markdown 기호(```json) 쓰지 말고 순수 텍스트로만 줘.\n"
-            "형식: {\"name\": \"요리명\", \"difficulty\": \"상/중/하\", \"time\": \"소요시간\", \"servings\": \"인분\", \"ingredients\": [\"재료\"], \"steps\": [\"조리순서\"]}"
+            "형식: {\"title\": \"요리명\", \"ingredients\": [\"재료\"], \"instructions\": [\"조리순서 배열\"]}"
         )
         
         response = model.generate_content(prompt)
         if response and response.text:
             raw_text = response.text.strip()
-            # 혹시 모를 마크다운 기호 제거 방어 로직
             raw_text = raw_text.replace("```json", "").replace("```", "").strip()
             
             json_match = re.search(r"\{.*\}", raw_text, re.DOTALL)
             recipe_data = json.loads(json_match.group(0)) if json_match else json.loads(raw_text)
             
-            # 프론트엔드가 읽어가는 포맷 규격 매핑 보정
+            # 🌟 [초핵심 방어선] 프론트엔드가 'map' 에러를 내지 않도록 모든 후보 Key(`instructions`, `steps`)를 이중 매핑하여 전달
+            final_title = recipe_data.get("title") or recipe_data.get("name") or "추천 요리"
+            final_ingredients = recipe_data.get("ingredients") or []
+            final_instructions = recipe_data.get("instructions") or recipe_data.get("steps") or []
+
             return {
                 "status": "success", 
                 "recipe": {
-                    "id": recipe_data.get("name"),
-                    "name": recipe_data.get("name"),
+                    "id": final_title,
+                    "name": final_title,
+                    "title": final_title, # 프론트 엔드 매핑 방어
                     "difficulty": recipe_data.get("difficulty", "중"),
                     "time": recipe_data.get("time", "20분"),
                     "servings": recipe_data.get("servings", "1인분"),
-                    "ingredients": recipe_data.get("ingredients", []),
-                    "steps": recipe_data.get("steps", [])
+                    "ingredients": final_ingredients,
+                    "instructions": final_instructions, # 👈 프론트엔드가 .map() 돌릴 대상 안전하게 주입
+                    "steps": final_instructions        # 이중 방어
                 }
             }
             
@@ -107,7 +113,7 @@ async def recommend_recipe(request: RecipeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# 🌟 [주소 교정] 서버 저장 라우터 주소 매핑 보정
+# AI 레시피 서버 저장 라우터
 @app.post("/api/recipe/save")
 async def save_recipe(request: RecipeSaveRequest):
     if not supabase:
@@ -124,7 +130,7 @@ async def save_recipe(request: RecipeSaveRequest):
             "time": request.recipe.get("time"),
             "servings": request.recipe.get("servings"),
             "ingredients": request.recipe.get("ingredients"),
-            "steps": request.recipe.get("steps"),
+            "steps": request.recipe.get("steps") or request.recipe.get("instructions"),
             "user_choices": request.recipe.get("userChoices"),
             "saved_at": request.recipe.get("savedAt")
         }).execute()
