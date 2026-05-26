@@ -29,6 +29,7 @@ origins = [
     "http://localhost:3000",
     "http://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
     "https://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
+    "https://foodket-coral.vercel.app",
 ]
 
 app.add_middleware(
