@@ -1,4 +1,4 @@
-Import os
+import os
 import json
 import re
 from pathlib import Path
@@ -22,11 +22,19 @@ SUPABASE_ANON_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY") or os.getenv("VITE_
 
 app = FastAPI()
 
-# CORS 설정
+# AWS S3 및 CloudFront, 로컬 오리진 허용
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
+    "https://foodket-web-bucket.s3-website.us-east-2.amazonaws.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=origins if origins else ["*"], 
+    allow_credentials=True,                      
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -46,7 +54,6 @@ class RecipeRequest(BaseModel):
     ingredients: List[str]
     user_id: str
 
-# ✅ 프론트엔드가 보낼 currentRecipe 데이터 구조에 맞춘 스키마 추가
 class RecipeSaveRequest(BaseModel):
     user_id: str
     recipe: Dict[str, Any]
@@ -54,46 +61,60 @@ class RecipeSaveRequest(BaseModel):
 
 # --- API 엔드포인트 ---
 
-# 1. AI 레시피 추천 라우터
+# 🌟 [주소 교정] 프론트엔드가 /api를 붙여서 쏘므로, 여기서는 중복되지 않게 /ai/recommend로 매핑합니다.
 @app.post("/api/ai/recommend")
 async def recommend_recipe(request: RecipeRequest):
     if not GEMINI_KEY:
         raise HTTPException(status_code=500, detail="API Key Missing")
 
     genai.configure(api_key=GEMINI_KEY)
-    # 기존 코드의 gemini-2.5-flash 모델 설정을 유지합니다.
     model = genai.GenerativeModel("gemini-2.5-flash")
     
     try:
         ingredients_str = ", ".join(request.ingredients)
+        # Gemini가 뱉는 JSON Key 규격을 프론트엔드가 파싱하기 좋게 title->name 등으로 최적화 프롬프트 수정
         prompt = (
             f"재료: {ingredients_str}. 요리 1개를 추천해줘.\n"
-            "반드시 JSON 형식으로만 응답: {\"title\": \"요리명\", \"ingredients\": [\"재료\"], \"instructions\": [\"순서\"]}"
+            "반드시 JSON 형식으로만 응답해야 해. Markdown 기호(```json) 쓰지 말고 순수 텍스트로만 줘.\n"
+            "형식: {\"name\": \"요리명\", \"difficulty\": \"상/중/하\", \"time\": \"소요시간\", \"servings\": \"인분\", \"ingredients\": [\"재료\"], \"steps\": [\"조리순서\"]}"
         )
         
         response = model.generate_content(prompt)
         if response and response.text:
             raw_text = response.text.strip()
+            # 혹시 모를 마크다운 기호 제거 방어 로직
+            raw_text = raw_text.replace("```json", "").replace("```", "").strip()
+            
             json_match = re.search(r"\{.*\}", raw_text, re.DOTALL)
             recipe_data = json.loads(json_match.group(0)) if json_match else json.loads(raw_text)
-            return {"status": "success", "recipe": recipe_data}
+            
+            # 프론트엔드가 읽어가는 포맷 규격 매핑 보정
+            return {
+                "status": "success", 
+                "recipe": {
+                    "id": recipe_data.get("name"),
+                    "name": recipe_data.get("name"),
+                    "difficulty": recipe_data.get("difficulty", "중"),
+                    "time": recipe_data.get("time", "20분"),
+                    "servings": recipe_data.get("servings", "1인분"),
+                    "ingredients": recipe_data.get("ingredients", []),
+                    "steps": recipe_data.get("steps", [])
+                }
+            }
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ✅ 2. AI 레시피 서버 저장 라우터 (프론트엔드 404 에러 해결 핵심)
+# 🌟 [주소 교정] 서버 저장 라우터 주소 매핑 보정
 @app.post("/api/recipe/save")
 async def save_recipe(request: RecipeSaveRequest):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase Credentials Missing")
     
     try:
-        # 프론트에서 넘어온 데이터 디버깅 확인용 출력
         print(f"🚀 [레시피 저장 요청] User ID: {request.user_id}, 요리명: {request.recipe.get('name')}")
         
-        # Supabase의 'ai_recipes' 테이블에 저장 요청을 보냅니다.
-        # 데이터베이스 스키마 컬럼명에 맞게 key를 조절해 주세요.
         data, count = supabase.table("ai_recipes").insert({
             "user_id": request.user_id,
             "recipe_id": request.recipe.get("id"),
@@ -101,7 +122,6 @@ async def save_recipe(request: RecipeSaveRequest):
             "difficulty": request.recipe.get("difficulty"),
             "time": request.recipe.get("time"),
             "servings": request.recipe.get("servings"),
-            # List(배열)나 객체 형태는 Postgres가 JSONB 타입일 때 안전하게 들어갑니다.
             "ingredients": request.recipe.get("ingredients"),
             "steps": request.recipe.get("steps"),
             "user_choices": request.recipe.get("userChoices"),
