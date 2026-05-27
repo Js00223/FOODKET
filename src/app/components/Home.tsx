@@ -62,7 +62,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 w-full overflow-x-hidden">
-      {/* Header */}
+      {/* Header - 모바일 패딩 px-4 고정 */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40 w-full">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4">
           <h1 className="text-2xl font-bold text-orange-500">자취요리 AI</h1>
@@ -72,12 +72,12 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Container */}
-      <div className="max-w-7xl mx-auto p-4 lg:p-8 w-full box-border flex flex-col gap-5">
+      {/* Main Container - px-4로 전체 가로 그리드 정렬 가이드를 100% 일치시킴 */}
+      <div className="max-w-7xl mx-auto px-4 py-5 lg:p-8 w-full box-border flex flex-col gap-5">
         
-        {/* AI 추천 배너 */}
-        <Link to="/ai-chat" className="block w-full">
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 lg:p-8 text-white shadow-lg hover:shadow-xl transition-shadow">
+        {/* AI 추천 배너 - w-full 구조로 양옆 라인 일치 */}
+        <Link to="/ai-chat" className="block w-full box-border">
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 lg:p-8 text-white shadow-lg hover:shadow-xl transition-shadow w-full box-border">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl lg:text-2xl font-bold mb-2">
@@ -92,10 +92,10 @@ export default function Home() {
           </div>
         </Link>
 
-        {/* 빠른 메뉴 */}
-        <div className="grid grid-cols-2 gap-3 lg:gap-4 w-full">
-          <Link to="/community" className="block w-full">
-            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow min-h-[120px] lg:min-h-[140px] flex flex-col justify-between box-border">
+        {/* 빠른 메뉴 - 상단 배너와 정확히 동일한 너비로 박스 안착 */}
+        <div className="grid grid-cols-2 gap-3 lg:gap-4 w-full box-border">
+          <Link to="/community" className="block w-full box-border">
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow min-h-[120px] lg:min-h-[140px] flex flex-col justify-between box-border w-full">
               <div className="flex flex-col items-start">
                 <Users className="w-7 h-7 lg:w-9 lg:h-9 text-orange-500 mb-2 flex-shrink-0" />
                 <h3 className="font-bold text-gray-800 text-sm lg:text-base tracking-tight">커뮤니티</h3>
@@ -104,8 +104,8 @@ export default function Home() {
             </div>
           </Link>
 
-          <Link to="/trade" className="block w-full">
-            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow min-h-[120px] lg:min-h-[140px] flex flex-col justify-between box-border">
+          <Link to="/trade" className="block w-full box-border">
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow min-h-[120px] lg:min-h-[140px] flex flex-col justify-between box-border w-full">
               <div className="flex flex-col items-start">
                 <ShoppingCart className="w-7 h-7 lg:w-9 lg:h-9 text-orange-500 mb-2 flex-shrink-0" />
                 <h3 className="font-bold text-gray-800 text-sm lg:text-base tracking-tight">식재료 거래</h3>
@@ -114,8 +114,8 @@ export default function Home() {
             </div>
           </Link>
 
-          <Link to="/chats" className="lg:block hidden w-full">
-            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow min-h-[140px] flex flex-col justify-between box-border">
+          <Link to="/chats" className="lg:block hidden w-full box-border">
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow min-h-[140px] flex flex-col justify-between box-border w-full">
               <div className="flex flex-col items-start">
                 <Users className="w-7 h-7 lg:w-9 lg:h-9 text-orange-500 mb-2 flex-shrink-0" />
                 <h3 className="font-semibold text-gray-800 text-sm lg:text-base">채팅</h3>
@@ -124,8 +124,8 @@ export default function Home() {
             </div>
           </Link>
 
-          <Link to="/saved-recipes" className="lg:block hidden w-full">
-            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow min-h-[140px] flex flex-col justify-between box-border">
+          <Link to="/saved-recipes" className="lg:block hidden w-full box-border">
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow min-h-[140px] flex flex-col justify-between box-border w-full">
               <div className="flex flex-col items-start">
                 <Bot className="w-7 h-7 lg:w-9 lg:h-9 text-orange-500 mb-2 flex-shrink-0" />
                 <h3 className="font-semibold text-gray-800 text-sm lg:text-base">저장 레시피</h3>
@@ -135,10 +135,10 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* 게시물 섹션 영역 */}
-        <div className="grid lg:grid-cols-2 gap-6 w-full">
+        {/* 게시물 섹션 영역 - 위 요소들과 좌우 정렬선을 100% 일치시키기 위해 flex 레이아웃으로 결합 */}
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-5 lg:gap-6 w-full box-border">
           {/* 인기 레시피 섹션 (DB 연동) */}
-          <section className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm">
+          <section className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm w-full box-border">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
                 <TrendingUp className="w-5 h-5 text-orange-500" />
@@ -163,7 +163,7 @@ export default function Home() {
                     <Link
                       key={recipe.id}
                       to={`/community/${recipe.id}`}
-                      className="block"
+                      className="block w-full"
                     >
                       <div className="flex gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0">
@@ -196,8 +196,8 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 최근 거래 (DB 연동) - ✨ 모바일 세로 2열(grid-cols-2), 가로 및 데스크탑 확장 시 3열(sm:grid-cols-3)로 반응형 싱크 교정 */}
-          <section className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm">
+          {/* 최근 거래 (DB 연동) */}
+          <section className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm w-full box-border">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
                 <ShoppingCart className="w-5 h-5 text-orange-500" />
@@ -207,7 +207,8 @@ export default function Home() {
                 전체보기
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+            {/* 세로 화면에서 그리드가 튀는 것을 막기 위해 col 구조 최적화 및 간격 조정 */}
+            <div className="grid grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 w-full">
               {loading
                 ? [1, 2, 3].map((i) => (
                     <div
@@ -222,7 +223,7 @@ export default function Home() {
                       to={`/trades/${item.id}`}
                       className="block h-full"
                     >
-                      <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors cursor-pointer h-full">
+                      <div className="bg-gray-50 rounded-lg p-2 sm:p-3 hover:bg-gray-100 transition-colors cursor-pointer h-full box-border">
                         <div className="w-full aspect-square bg-gray-200 rounded-lg mb-2">
                           <img
                             src={
@@ -231,12 +232,12 @@ export default function Home() {
                             }
                             alt={item.title}
                             className="w-full h-full object-cover rounded-lg"
-                          />
+              />
                         </div>
-                        <p className="text-sm font-medium text-gray-800 truncate">
+                        <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
                           {item.title}
                         </p>
-                        <p className="text-xs text-orange-500 font-bold mt-1">
+                        <p className="text-[11px] sm:text-xs text-orange-500 font-bold mt-1">
                           {item.price === 0
                             ? "무료나눔"
                             : `${item.price?.toLocaleString()}원`}
