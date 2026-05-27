@@ -62,9 +62,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header - 모바일 좌우 패딩을 px-4에서 px-6으로 넓혀 벽에서 띄움 */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4">
           <h1 className="text-2xl font-bold text-orange-500">자취요리 AI</h1>
           <p className="text-sm text-gray-600 mt-1">
             혼자서도 맛있게, 간편하게
@@ -72,7 +72,8 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto p-4 lg:p-8">
+      {/* Main Container - 모바일 좌우 여백을 p-4에서 p-6으로 확장하여 시각적 답답함 해소 */}
+      <div className="max-w-7xl mx-auto p-6 lg:p-8">
         {/* AI 추천 배너 */}
         <Link to="/ai-chat">
           <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 lg:p-8 text-white shadow-lg hover:shadow-xl transition-shadow mb-6">
@@ -90,36 +91,44 @@ export default function Home() {
           </div>
         </Link>
 
-        {/* 빠른 메뉴 */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
-          <Link to="/community">
-            <div className="bg-white rounded-xl p-5 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <Users className="w-8 h-8 lg:w-10 lg:h-10 text-orange-500 mb-3" />
-              <h3 className="font-semibold text-gray-800">커뮤니티</h3>
+        {/* 빠른 메뉴 - items-stretch를 적용하여 커뮤니티와 식재료 거래 카드의 세로 높이를 1:1로 칼정렬 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6 items-stretch">
+          <Link to="/community" className="flex">
+            <div className="bg-white rounded-xl p-5 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow w-full flex flex-col justify-between">
+              <div>
+                <Users className="w-8 h-8 lg:w-10 lg:h-10 text-orange-500 mb-3" />
+                <h3 className="font-semibold text-gray-800">커뮤니티</h3>
+              </div>
               <p className="text-xs text-gray-500 mt-1">레시피 공유</p>
             </div>
           </Link>
 
-          <Link to="/trade">
-            <div className="bg-white rounded-xl p-5 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <ShoppingCart className="w-8 h-8 lg:w-10 lg:h-10 text-orange-500 mb-3" />
-              <h3 className="font-semibold text-gray-800">식재료 거래</h3>
+          <Link to="/trade" className="flex">
+            <div className="bg-white rounded-xl p-5 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow w-full flex flex-col justify-between">
+              <div>
+                <ShoppingCart className="w-8 h-8 lg:w-10 lg:h-10 text-orange-500 mb-3" />
+                <h3 className="font-semibold text-gray-800">식재료 거래</h3>
+              </div>
               <p className="text-xs text-gray-500 mt-1">남은 재료 나눔</p>
             </div>
           </Link>
 
-          <Link to="/chats">
-            <div className="bg-white rounded-xl p-5 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow lg:block hidden">
-              <Users className="w-8 h-8 lg:w-10 lg:h-10 text-orange-500 mb-3" />
-              <h3 className="font-semibold text-gray-800">채팅</h3>
+          <Link to="/chats" className="lg:flex hidden">
+            <div className="bg-white rounded-xl p-5 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow w-full flex flex-col justify-between">
+              <div>
+                <Users className="w-8 h-8 lg:w-10 lg:h-10 text-orange-500 mb-3" />
+                <h3 className="font-semibold text-gray-800">채팅</h3>
+              </div>
               <p className="text-xs text-gray-500 mt-1">거래 문의</p>
             </div>
           </Link>
 
-          <Link to="/saved-recipes">
-            <div className="bg-white rounded-xl p-5 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow lg:block hidden">
-              <Bot className="w-8 h-8 lg:w-10 lg:h-10 text-orange-500 mb-3" />
-              <h3 className="font-semibold text-gray-800">저장 레시피</h3>
+          <Link to="/saved-recipes" className="lg:flex hidden">
+            <div className="bg-white rounded-xl p-5 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow w-full flex flex-col justify-between">
+              <div>
+                <Bot className="w-8 h-8 lg:w-10 lg:h-10 text-orange-500 mb-3" />
+                <h3 className="font-semibold text-gray-800">저장 레시피</h3>
+              </div>
               <p className="text-xs text-gray-500 mt-1">내 레시피 모음</p>
             </div>
           </Link>
