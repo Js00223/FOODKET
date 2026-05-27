@@ -17,7 +17,7 @@ export default function TradeWrite() {
     title: "",
     price: "",
     content: "",
-    location: "서울시 강남구",
+    location: "구미시 신평동", // 💡 로컬 스펙에 맞춰 기본값을 구미시로 변경했습니다.
     image_url: "",
   });
 
@@ -37,22 +37,27 @@ export default function TradeWrite() {
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    // 헤더 버튼 클릭과 form submit 두 곳에서 호출되므로 중복 실행 방지
+    if (e && e.preventDefault) e.preventDefault();
+    
     if (!formData.title || !formData.content) {
       return alert("제목과 내용을 모두 입력해주세요.");
     }
 
     setLoading(true);
     try {
-      // 💡 여기서 핵심! DB 컬럼명(item_name, description)에 맞춰서 데이터를 보냅니다.
+      // 💡 ✨ 핵심 수정 포인트: DB의 `title text NOT NULL` 제약조건과 스펙을 완벽하게 충족시킵니다.
       const { error } = await supabase.from("trades").insert({
         user_id: userId,
-        item_name: formData.title, // ✅ title 대신 item_name
-        description: formData.content, // ✅ content 대신 description
+        title: formData.title,         // ✅ [필수] DB의 title 컬럼에 제목 바인딩 (Not-Null 에러 해결!)
+        item_name: postType === "trade" ? formData.title : "커뮤니티", // ✅ 중고거래는 제목을 품목명으로, 커뮤니티는 고정값 할당
+        content: formData.content,     // ✅ 커뮤니티 본문 컬럼용 데이터 세팅
+        description: formData.content, // ✅ 중고거래 상세설명 컬럼용 데이터 세팅
         price: postType === "trade" ? Number(formData.price) || 0 : 0,
         location: formData.location,
         image_url: formData.image_url || null, // 빈 값일 경우 null 처리
         type: postType,
+        status: postType === "trade" ? "available" : "active", // DB 초기 상태 매핑 무결성 확보
       });
 
       if (error) throw error;
@@ -79,7 +84,7 @@ export default function TradeWrite() {
           {postType === "trade" ? "내 물건 팔기" : "커뮤니티 글쓰기"}
         </h1>
         <button
-          onClick={handleSubmit}
+          onClick={(e) => handleSubmit(e)}
           disabled={loading}
           className={`font-bold ${loading ? "text-gray-400" : "text-orange-500"}`}
         >
@@ -112,7 +117,7 @@ export default function TradeWrite() {
           )}
         </div>
 
-        {/* 제목 입력 - item_name이 될 부분 */}
+        {/* 제목 입력 - title과 item_name이 될 부분 */}
         <div>
           <input
             type="text"
@@ -143,7 +148,7 @@ export default function TradeWrite() {
           </div>
         )}
 
-        {/* 설명 입력 - description이 될 부분 */}
+        {/* 설명 입력 - content와 description이 될 부분 */}
         <div>
           <textarea
             placeholder={
