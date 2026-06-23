@@ -48,11 +48,10 @@ export const router = createBrowserRouter([
       // 마이페이지 메인
       { path: "mypage", Component: MyPage },
 
-      // 💡 [5번 수정사항 반영] 마이페이지 3단 지표 클릭 시 이동할 상세 기능 경로 매핑
-      { path: "mypage/recipes", Component: MyRecipes }, // 작성한 레시피 클릭 시 이동
-      { path: "mypage/sales", Component: MySales },     // 거래건수 클릭 시 이동
-      { path: "mypage/likes", Component: Likes },       // 관심목록 클릭 시 이동
-      
+      // 마이페이지 상세 기능 경로
+      { path: "my-posts", Component: MyRecipes },
+      { path: "sales", Component: MySales },
+      { path: "likes", Component: Likes },
       { path: "settings", Component: Account }, // 일반 계정 설정
 
       // 💡 [해결] 프로필 사진 변경 전용 경로 추가
